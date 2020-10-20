@@ -19,17 +19,17 @@ namespace lab05
             g = Graphics.FromImage(imageToDrawBox.Image);
             bmp = (Bitmap)imageToDrawBox.Image;
         }
+
         private static List<Point> points = new List<Point>();
         private static Graphics g;
         private static Bitmap bmp;
         private bool haveFictivePoint = false;
         private Point fictivePoint = new Point();
         private bool nowMoving = false;
+        private bool dynamicUpdating = false;
         private int indOfMovingPoint = -1;
 
-        private int diff_for_accuracy = 7;
-
-        private System.IO.StreamWriter writer = new System.IO.StreamWriter("indices2.txt");
+        private int accuracy = 7;
 
         /// <summary>
         /// очистка рисования сплайнов, не удаляя точки
@@ -54,7 +54,19 @@ namespace lab05
         /// <param name="c"></param>
         private void DrawPoint(int x, int y, Color c)
         {
-            g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(x, y, 3, 3));
+            g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(x, y, 5, 5));
+            imageToDrawBox.Image = bmp;
+        }
+
+        /// <summary>
+        /// рисование большей точки 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="c"></param>
+        private void DrawBiggerPoint(int x, int y, Color c)
+        {
+            g.FillRectangle(new SolidBrush(Color.Black), new Rectangle(x, y, 7, 7));
             imageToDrawBox.Image = bmp;
         }
 
@@ -101,7 +113,7 @@ namespace lab05
             if (x > 0 && x < imageToDrawBox.Width && y > 0 && y < imageToDrawBox.Height)
             {
                 int indToDel = 0;
-                int diff = diff_for_accuracy;
+                int diff = accuracy;
                 if (points.Exists(point => ((point.X > x - diff) && (point.X < x + diff)) &&
                     ((point.Y > y - diff) && (point.Y < y + diff))))
                 {
@@ -124,12 +136,7 @@ namespace lab05
                 return false;
             }
         }
-
-        /// <summary>
-        /// функция клика мыши: проверка выбора radiobutton на добавление/удаление/перемещение точки
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        
         private void imageToDrawBox_MouseClick(object sender, MouseEventArgs e)
         {
             int x = e.Location.X;
@@ -149,14 +156,9 @@ namespace lab05
                 }
             }
             ClearWithoutPoints();
-            DrawObject();
+            DrawSpline();
         }
-
-        /// <summary>
-        /// функция фиксирует движение мыши при активном radiobutton перемещении точки 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        
         private void imageToDrawBox_MouseDown(object sender, MouseEventArgs e)
         {
             int x = e.Location.X;
@@ -166,7 +168,7 @@ namespace lab05
             {
                 nowMoving = true;
                 //DeletePoint(x, y); //?
-                int diff = diff_for_accuracy;
+                int diff = accuracy;
 
                 if (nowMoving && indOfMovingPoint == -1)
                 {
@@ -176,15 +178,10 @@ namespace lab05
                     writer.Flush();
                 }
                 ClearWithoutPoints();
-                DrawObject();
+                DrawSpline();
             }
         }
-
-        /// <summary>
-        /// функция фиксирует движение мыши при активном radiobutton перемещении точки
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        
         private void imageToDrawBox_MouseUp(object sender, MouseEventArgs e)
         {
             int x = e.Location.X;
@@ -198,7 +195,7 @@ namespace lab05
                 if (AddPoint(x, y, Color.Black, ind))
                 {
                     ClearWithoutPoints();
-                    DrawObject();
+                    DrawSpline();
                 }
                 nowMoving = false;
                 indOfMovingPoint = -1;
@@ -206,7 +203,32 @@ namespace lab05
         }
 
         /// <summary>
-        /// высчитывание координаты точки q0=p0(1-t)+p1*t
+        /// динамическое обновление кривой
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void imageToDrawBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (dynamicUpdating && MoveRadioButton.Checked && indOfMovingPoint != -1)
+            {
+                int x = e.Location.X;
+                int y = e.Location.Y;
+                if (x > 0 && x < imageToDrawBox.Width && y > 0 && y < imageToDrawBox.Height)
+                {
+                    int ind = System.Math.Min(indOfMovingPoint, points.Count());
+                    Point p = points[indOfMovingPoint];
+                    DeletePoint(p.X, p.Y);
+                    if (AddPoint(x, y, Color.Black, ind))
+                    {
+                        ClearWithoutPoints();
+                        DrawSpline();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// координата точки q0=p0(1-t)+p1*t
         /// </summary>
         /// <param name="p0"></param>
         /// <param name="p1"></param>
@@ -218,7 +240,7 @@ namespace lab05
         }
 
         /// <summary>
-        /// высчитывание координаты точки r0=q0(1-t)+q1*t
+        /// координата точки r0=q0(1-t)+q1*t
         /// </summary>
         /// <param name="p0"></param>
         /// <param name="p1"></param>
@@ -232,7 +254,7 @@ namespace lab05
         }
 
         /// <summary>
-        /// высчитывание координаты точки b=r0(1-t)+r1*t
+        /// координата точки b=r0(1-t)+r1*t
         /// </summary>
         /// <param name="p0"></param>
         /// <param name="p1"></param>
@@ -298,12 +320,13 @@ namespace lab05
         /// <param name="p1"></param>
         /// <param name="p2"></param>
         /// <param name="p3"></param>
-        private void DrawCurveBy4Points(Point p0, Point p1, Point p2, Point p3)
+        private void DrawSplineBy4Points(Point p0, Point p1, Point p2, Point p3)
         {
             PointF prevP = B(p0, p1, p2, p3, (float)0);
-            for (int i = 1; i <= 100; ++i)
+            int factor = factorTrackBar.Value;
+            for (int i = 1; i <= factor; ++i)
             {
-                PointF p = B(p0, p1, p2, p3, (float)i / 100);
+                PointF p = B(p0, p1, p2, p3, (float)i / factor);
 
                 DrawLine(prevP, p, Color.Red);
                 prevP = p;
@@ -313,7 +336,7 @@ namespace lab05
         /// <summary>
         /// рисование сплайна по заданным точкам
         /// </summary>
-        private void DrawObject()
+        private void DrawSpline()
         {
             AddPointsForDrawingCurve();
             if (points.Count() == 4)
@@ -323,7 +346,7 @@ namespace lab05
                 Point p2 = points[2];
                 Point p3 = points[3];
 
-                DrawCurveBy4Points(p0, p1, p2, p3);
+                DrawSplineBy4Points(p0, p1, p2, p3);
             }
             if (points.Count() > 4)
             {
@@ -337,7 +360,7 @@ namespace lab05
                     Point p2 = points[2];
                     Point p3 = PointBetweenPoints(points[2], points[3]);
 
-                    DrawCurveBy4Points(p0, p1, p2, p3);
+                    DrawSplineBy4Points(p0, p1, p2, p3);
 
                     for (int i = 3; i < sz - 4; i += 2)
                     {
@@ -346,14 +369,14 @@ namespace lab05
                         p2 = points[i + 1];
                         p3 = PointBetweenPoints(points[i + 1], points[i + 2]);
 
-                        DrawCurveBy4Points(p0, p1, p2, p3);
+                        DrawSplineBy4Points(p0, p1, p2, p3);
                     }
 
                     p3 = points[sz - 1];
                     p2 = points[sz - 2];
                     p1 = points[sz - 3];
                     p0 = PointBetweenPoints(points[sz - 3], points[sz - 4]);
-                    DrawCurveBy4Points(p0, p1, p2, p3);
+                    DrawSplineBy4Points(p0, p1, p2, p3);
                 }
             }
         }
@@ -366,18 +389,17 @@ namespace lab05
             points.Clear();
         }
 
-        /// <summary>
-        /// фукция добавления точки по координатам
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        /*private void ButtonAdd_Click(object sender, EventArgs e)
+        private void DynamicCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            int x = int.Parse(textBoxAdd1.Text);
-            int y = int.Parse(textBoxAdd2.Text);
-            AddPoint(x, y, Color.Black);
+            dynamicUpdating = !dynamicUpdating;
+        }
+
+        private void factorTrackBar_Scroll(object sender, EventArgs e)
+        {
             ClearWithoutPoints();
-            DrawObject();
-        }*/
+            DrawSpline();
+        }
+
+        
     }
 }
