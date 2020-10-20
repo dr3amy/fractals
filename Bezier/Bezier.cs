@@ -167,7 +167,6 @@ namespace lab05
             if (MoveRadioButton.Checked)
             {
                 nowMoving = true;
-                //DeletePoint(x, y); //?
                 int diff = accuracy;
 
                 if (nowMoving && indOfMovingPoint == -1)

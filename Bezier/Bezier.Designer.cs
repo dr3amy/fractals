@@ -123,7 +123,7 @@
             // 
             this.DynamicCheckBox.AutoSize = true;
             this.DynamicCheckBox.Font = new System.Drawing.Font("Segoe UI", 14F);
-            this.DynamicCheckBox.Location = new System.Drawing.Point(19, 262);
+            this.DynamicCheckBox.Location = new System.Drawing.Point(19, 355);
             this.DynamicCheckBox.Name = "DynamicCheckBox";
             this.DynamicCheckBox.Size = new System.Drawing.Size(116, 29);
             this.DynamicCheckBox.TabIndex = 11;
@@ -135,7 +135,7 @@
             // 
             this.groupBox1.Controls.Add(this.factorTrackBar);
             this.groupBox1.Font = new System.Drawing.Font("Segoe UI", 14F);
-            this.groupBox1.Location = new System.Drawing.Point(3, 297);
+            this.groupBox1.Location = new System.Drawing.Point(3, 261);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(211, 78);
             this.groupBox1.TabIndex = 12;
