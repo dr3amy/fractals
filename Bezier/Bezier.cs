@@ -174,8 +174,6 @@ namespace lab05
                 {
                     indOfMovingPoint = points.FindIndex(point => ((point.X > x - diff) && (point.X < x + diff)) &&
                         ((point.Y > y - diff) && (point.Y < y + diff)));
-                    writer.WriteLine(indOfMovingPoint);
-                    writer.Flush();
                 }
                 ClearWithoutPoints();
                 DrawSpline();
