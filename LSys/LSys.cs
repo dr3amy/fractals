@@ -16,5 +16,10 @@ namespace lab05
         {
             InitializeComponent();
         }
+
+        private void chooseFileButton_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
