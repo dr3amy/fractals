@@ -90,6 +90,7 @@
             0,
             0,
             0});
+            this.iterationsCountBox.ValueChanged += new System.EventHandler(this.iterationsCountBox_ValueChanged);
             // 
             // fileNameLabel
             // 
